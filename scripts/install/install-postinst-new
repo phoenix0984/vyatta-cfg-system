@@ -53,12 +53,8 @@ copy_config () {
 
     # Third candidate: The default config file
     DEF_CONF=$vyatta_sysconfdir/config.boot.default
-    # Add custom boot image as option
-    DEF_CUST=$vyatta_sysconfdir/config.boot.custom
-    if [ -f $DEF_CONF && -f $DEF_CUST ]; then
-	    config="$config $DEF_CONF $DEF_CUST"
-    else
-      config="$config $DEF_CONF"
+    if [ -f $DEF_CONF ]; then
+	config="$config $DEF_CONF"
     fi
 
     if [ -n "$config" ]; then
@@ -66,8 +62,8 @@ copy_config () {
       for file in $config; do
         echo "    $file"
       done
-
-      default=$(echo -e $config | awk '{ print $3 }')
+      # Set optional config as default
+      default=$(echo -e $config | awk '{ print $2 }')
 
       while [ -z "$configfile" ]; do
         echo -n "Which one should I copy to $INSTALL_DRIVE? [$default]: "
