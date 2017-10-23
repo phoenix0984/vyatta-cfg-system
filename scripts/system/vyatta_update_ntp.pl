@@ -21,6 +21,7 @@
 use strict;
 use lib "/opt/vyatta/share/perl5";
 use Vyatta::Config;
+use Net::Ping;
 use NetAddr::IP;
 use Getopt::Long;
 
@@ -47,6 +48,16 @@ sub ntp_format {
     } else {
         return undef;
     }
+}
+
+sub wan_up {
+    my $p = Net::Ping->new("icmp");
+    if ($p->ping('google.com', 2)) {
+      return 1;
+    } else {
+      return undef;
+    }
+    $p->close();
 }
 
 my @ntp;
@@ -79,12 +90,16 @@ my @clients;
 if ($dhclient_script == 1) {
     @servers = $cfg->listOrigNodes("server");
     @clients = $cfg->returnOrigValues("client address");
-} else {
+} elsif (wan_up()) {
     @servers = $cfg->listNodes("server");
+    @clients = $cfg->returnValues("client address");
+} else {
+    @servers = ("192.53.103.108", "192.53.103.104", "192.53.103.103");
     @clients = $cfg->returnValues("client address");
 }
 
 if (scalar(@servers) > 0) {
+    print $output "interface ignore wildcard\ninterface listen 192.168.188.1\n\n";
     print $output "# Servers\n\n";
     foreach my $server (@servers) {
         my $server_addr = ntp_format($server);
