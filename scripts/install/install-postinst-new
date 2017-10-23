@@ -62,14 +62,14 @@ copy_config () {
       for file in $config; do
         echo "    $file"
       done
-
-      default=$(echo -e $config | awk '{ print $1 }')
+      # Set optional config as default
+      default=$(echo -e $config | awk '{ print $2 }')
 
       while [ -z "$configfile" ]; do
         echo -n "Which one should I copy to $INSTALL_DRIVE? [$default]: "
         configfile=$(get_response "$default" "$config")
       done
-      
+
       echo
       echo "Copying $configfile to $INSTALL_DRIVE."
       cp -p $configfile $cfg_dir/config.boot >&/dev/null
@@ -97,7 +97,7 @@ copy_config () {
 install_grub () {
   grub_inst_drv=''
   raid_slaves=''
-  
+
   if [ ${INSTALL_DRIVE:0:2} == "md" ]; then
     raid_slaves=`ls /sys/block/${INSTALL_DRIVE}/slaves`
     grub_inst_drv="md raid"
@@ -120,9 +120,9 @@ install_grub () {
   # Install grub in the boot sector of the primary drive, or if the installation
   # target is a raid setup, then install it into the boot sector of all slave
   # members.
-  
+
   progress_indicator start
-  
+
   if [[ $grub_inst_drv == "md raid" ]]; then
     for slave in $raid_slaves; do
       grub_inst_drv=${slave:0:3}
@@ -135,7 +135,7 @@ install_grub () {
         /dev/$grub_inst_drv 2>&1)
     lecho "$output"
   fi
-  
+
   progress_indicator stop
 
   output=$(/opt/vyatta/sbin/vyatta-grub-setup $grub_setup_args \
@@ -265,4 +265,3 @@ fi
 becho "Done!"
 
 exit 0
-
